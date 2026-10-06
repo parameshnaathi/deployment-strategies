@@ -1,0 +1,37 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: demo-app-v1
+  namespace: deployment-lab
+spec:
+  replicas: 4
+  selector:
+    matchLabels:
+      app: demo-app
+      version: v1
+  template:
+    metadata:
+      labels:
+        app: demo-app
+        version: v1
+    spec:
+      containers:
+        - name: nginx
+          image: nginx:1.27-alpine
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: APP_VERSION
+              value: "V1"
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              printf '<html><body><h1>Canary Lab</h1><h2>Stable: %s</h2><p>Pod: %s</p></body></html>\n' "$APP_VERSION" "$HOSTNAME" > /usr/share/nginx/html/index.html
+              exec nginx -g 'daemon off;'
+          ports:
+            - containerPort: 80
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 80
+            initialDelaySeconds: 2
+            periodSeconds: 3
